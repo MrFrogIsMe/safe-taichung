@@ -19,6 +19,14 @@ DATA_DIR = Path(__file__).parent.parent / 'data'
 PROCESSED_DIR = DATA_DIR / 'processed'
 CACHE_FILE = PROCESSED_DIR / 'geocode_cache.json'
 
+# 台中市整體邊界框（用於驗證座標）
+TAICHUNG_BOUNDS = {
+    'lat_min': 24.0,
+    'lat_max': 24.5,
+    'lon_min': 120.4,
+    'lon_max': 121.1  # 和平區較東
+}
+
 # 台中市行政區中心座標與邊界（近似值）
 DISTRICT_BOUNDS = {
     '中區': {'center': (24.1436, 120.6794), 'radius': 0.008},
@@ -67,23 +75,38 @@ def save_cache(cache: dict):
         json.dump(cache, f, ensure_ascii=False, indent=2)
 
 
+def is_in_taichung(lat: float, lon: float) -> bool:
+    """檢查座標是否在台中市範圍內"""
+    return (TAICHUNG_BOUNDS['lat_min'] <= lat <= TAICHUNG_BOUNDS['lat_max'] and
+            TAICHUNG_BOUNDS['lon_min'] <= lon <= TAICHUNG_BOUNDS['lon_max'])
+
+
 def geocode_address(address: str, geolocator, cache: dict) -> tuple:
     """
     使用 Nominatim 對單一地址進行地理編碼
 
     回傳: (lat, lon, method) 或 (None, None, 'failed')
     """
-    # 檢查快取
+    # 檢查快取（同時驗證座標是否在台中市範圍內）
     if address in cache:
         cached = cache[address]
-        return cached['lat'], cached['lon'], 'cache'
+        lat, lon = cached['lat'], cached['lon']
+        if is_in_taichung(lat, lon):
+            return lat, lon, 'cache'
+        # 快取中的座標不在台中，需要重新編碼
 
     try:
         # 嘗試地理編碼
         location = geolocator.geocode(address, timeout=10)
         if location:
-            cache[address] = {'lat': location.latitude, 'lon': location.longitude}
-            return location.latitude, location.longitude, 'nominatim'
+            lat, lon = location.latitude, location.longitude
+            # 驗證座標是否在台中市範圍內
+            if is_in_taichung(lat, lon):
+                cache[address] = {'lat': lat, 'lon': lon}
+                return lat, lon, 'nominatim'
+            else:
+                print(f"  ⚠ 座標超出台中範圍: {address[:25]} -> ({lat:.2f}, {lon:.2f})")
+                return None, None, 'out_of_bounds'
     except (GeocoderTimedOut, GeocoderServiceError) as e:
         print(f"Geocoding error for {address}: {e}")
     except Exception as e:

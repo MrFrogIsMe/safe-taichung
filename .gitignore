@@ -16,3 +16,6 @@ docs/AI_*
 
 # macOS
 .DS_Store
+
+# Environment variables (API keys)
+.env
