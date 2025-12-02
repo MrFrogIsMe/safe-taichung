@@ -216,15 +216,15 @@ def create_risk_map(district_risk_df, show_rate=True):
     return m
 
 
-def create_route_map(origin_name, dest_name, route_result, google_route=None):
-    """建立路線地圖（支援 Google Maps 真實路線）"""
+def create_route_map(origin_name, dest_name, route_result, google_route=None, show_crimes=True):
+    """建立路線地圖（支援 Google Maps 真實路線 + 犯罪熱點）"""
     origin_info = LANDMARKS.get(origin_name)
     dest_info = LANDMARKS.get(dest_name)
 
     if not origin_info or not dest_info:
         return None
 
-    # 計算地圖中心
+    # 計算地圖中心與邊界
     center_lat = (origin_info['coords'][0] + dest_info['coords'][0]) / 2
     center_lon = (origin_info['coords'][1] + dest_info['coords'][1]) / 2
 
@@ -233,6 +233,43 @@ def create_route_map(origin_name, dest_name, route_result, google_route=None):
         zoom_start=14,
         tiles='cartodbpositron'
     )
+
+    # 計算路線邊界框（用於篩選附近犯罪點）
+    route_coords = []
+    if google_route and 'polyline' in google_route:
+        coords = decode_polyline(google_route['polyline'])
+        route_coords = [(p['lat'], p['lng']) for p in coords]
+    else:
+        route_coords = [origin_info['coords'], dest_info['coords']]
+
+    # 顯示路線附近的犯罪熱點
+    if show_crimes and route_coords:
+        crime_data = load_geocoded_crimes()
+        if crime_data is not None:
+            # 計算路線邊界框
+            lats = [c[0] for c in route_coords]
+            lons = [c[1] for c in route_coords]
+            lat_min, lat_max = min(lats) - 0.008, max(lats) + 0.008  # 約 800m 緩衝
+            lon_min, lon_max = min(lons) - 0.01, max(lons) + 0.01
+
+            # 篩選路線附近的犯罪點
+            nearby_crimes = crime_data[
+                (crime_data['latitude'] >= lat_min) &
+                (crime_data['latitude'] <= lat_max) &
+                (crime_data['longitude'] >= lon_min) &
+                (crime_data['longitude'] <= lon_max)
+            ].dropna(subset=['latitude', 'longitude'])
+
+            if len(nearby_crimes) > 0:
+                # 添加熱力圖層
+                heat_data = nearby_crimes[['latitude', 'longitude']].values.tolist()
+                HeatMap(
+                    heat_data,
+                    radius=20,
+                    blur=15,
+                    max_zoom=15,
+                    gradient={0.2: 'blue', 0.4: 'lime', 0.6: 'yellow', 0.8: 'orange', 1: 'red'}
+                ).add_to(m)
 
     # 添加起點標記
     folium.Marker(
@@ -248,29 +285,24 @@ def create_route_map(origin_name, dest_name, route_result, google_route=None):
         icon=folium.Icon(color='red', icon='stop')
     ).add_to(m)
 
-    # 繪製路線
+    # 繪製路線（在熱力圖上方）
     route_color = get_risk_color(route_result['route_risk_label'])
 
     if google_route and 'polyline' in google_route:
-        # 使用 Google Maps 真實路線
-        coords = decode_polyline(google_route['polyline'])
-        # decode_polyline 回傳 {'lat': x, 'lng': y} 格式
-        route_coords = [(p['lat'], p['lng']) for p in coords]
         folium.PolyLine(
             locations=route_coords,
-            weight=5,
+            weight=6,
             color=route_color,
-            opacity=0.8,
+            opacity=0.9,
             popup=f"距離: {google_route['distance']['text']}<br>時間: {google_route['duration']['text']}"
         ).add_to(m)
     else:
-        # Fallback: 直線連接
         folium.PolyLine(
             locations=[origin_info['coords'], dest_info['coords']],
             weight=5,
             color=route_color,
             opacity=0.8,
-            dash_array='10, 10',  # 虛線表示非真實路線
+            dash_array='10, 10',
             popup="簡化路線（非實際道路）"
         ).add_to(m)
 
@@ -674,9 +706,40 @@ def show_route_planning():
 
         # 地圖
         st.subheader("🗺️ 路線地圖")
-        route_map = create_route_map(origin, dest, result, google_route)
+
+        # 犯罪熱點開關
+        show_crimes = st.checkbox("🔥 顯示路線附近犯罪熱點", value=True)
+
+        route_map = create_route_map(origin, dest, result, google_route, show_crimes=show_crimes)
         if route_map:
-            st_folium(route_map, width=700, height=400)
+            st_folium(route_map, width=700, height=450)
+
+        # 路線附近犯罪統計
+        if show_crimes:
+            crime_data = load_geocoded_crimes()
+            if crime_data is not None and google_route:
+                coords = decode_polyline(google_route['polyline'])
+                route_coords = [(p['lat'], p['lng']) for p in coords]
+                lats = [c[0] for c in route_coords]
+                lons = [c[1] for c in route_coords]
+                lat_min, lat_max = min(lats) - 0.008, max(lats) + 0.008
+                lon_min, lon_max = min(lons) - 0.01, max(lons) + 0.01
+
+                nearby_crimes = crime_data[
+                    (crime_data['latitude'] >= lat_min) &
+                    (crime_data['latitude'] <= lat_max) &
+                    (crime_data['longitude'] >= lon_min) &
+                    (crime_data['longitude'] <= lon_max)
+                ]
+
+                if len(nearby_crimes) > 0:
+                    st.markdown(f"**📊 路線附近犯罪統計** (約 800m 範圍內)")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("附近案件數", f"{len(nearby_crimes)} 件")
+                    with col2:
+                        top_crime = nearby_crimes['crime_category'].value_counts().idxmax()
+                        st.metric("最常見類型", top_crime)
 
         # 導航步驟（如果有 Google Maps 路線）
         if google_route and google_route.get('steps'):
@@ -686,6 +749,8 @@ def show_route_planning():
                     instruction = step['instruction']
                     instruction = instruction.replace('<b>', '**').replace('</b>', '**')
                     instruction = instruction.replace('<div style="font-size:0.9em">', ' (').replace('</div>', ')')
+                    instruction = instruction.replace('<wbr/>', '')  # 移除換行提示標籤
+                    instruction = instruction.replace('<wbr>', '')
                     st.markdown(f"{i}. {instruction} - {step['distance']}")
 
         # 詳細分析
