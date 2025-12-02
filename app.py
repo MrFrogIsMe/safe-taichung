@@ -268,7 +268,7 @@ def main():
         st.markdown("---")
         page = st.radio(
             "選擇功能",
-            ["🗺️ 安全路線規劃", "📊 治安風險地圖", "🔥 犯罪熱點地圖", "ℹ️ 關於本系統"],
+            ["🏠 首頁", "📈 資料分析", "🗺️ 安全路線規劃", "📊 治安風險地圖", "🔥 犯罪熱點地圖", "ℹ️ 關於本系統"],
             index=0
         )
 
@@ -280,7 +280,11 @@ def main():
         """)
 
     # 主頁面內容
-    if page == "🗺️ 安全路線規劃":
+    if page == "🏠 首頁":
+        show_home()
+    elif page == "📈 資料分析":
+        show_data_analysis()
+    elif page == "🗺️ 安全路線規劃":
         show_route_planning()
     elif page == "📊 治安風險地圖":
         show_risk_map()
@@ -288,6 +292,214 @@ def main():
         show_crime_heatmap()
     else:
         show_about()
+
+
+def show_home():
+    """首頁 - 專題簡報嵌入"""
+    st.header("🏠 台中安全路線導航 SafeTaichung")
+
+    st.markdown("""
+    ## 計算思維與人工智慧 期末專題
+
+    **研究題目**：台中市都市犯罪分析：以 AI 輔助打造安全永續城市
+    """)
+
+    # Canva 簡報嵌入區域
+    st.markdown("---")
+    st.subheader("📊 專題簡報")
+
+    # Canva 嵌入說明
+    st.info("""
+    💡 **如何嵌入 Canva 簡報**：
+    1. 在 Canva 開啟你的簡報
+    2. 點擊右上角「分享」→「更多」→「嵌入」
+    3. 複製 embed code 中的網址
+    4. 將下方的 CANVA_EMBED_URL 替換為你的網址
+    """)
+
+    # Canva 嵌入框架（請替換為實際的 Canva 嵌入網址）
+    canva_embed_url = st.text_input(
+        "貼上 Canva 嵌入網址",
+        placeholder="https://www.canva.com/design/XXXXX/view?embed",
+        help="從 Canva 分享選單中取得嵌入網址"
+    )
+
+    if canva_embed_url and "canva.com" in canva_embed_url:
+        st.markdown(f"""
+        <div style="position: relative; width: 100%; height: 0; padding-top: 56.25%; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <iframe
+                loading="lazy"
+                style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none;"
+                src="{canva_embed_url}"
+                allowfullscreen>
+            </iframe>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        # 預留空間顯示佔位圖
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 12px;
+                    padding: 80px 40px;
+                    text-align: center;
+                    color: white;
+                    margin: 20px 0;">
+            <h2 style="margin: 0;">📽️ 簡報區域</h2>
+            <p style="opacity: 0.8; margin-top: 10px;">請在上方輸入 Canva 嵌入網址</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 快速導覽
+    st.markdown("---")
+    st.subheader("🚀 快速導覽")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; text-align: center;">
+            <h3>📈 資料分析</h3>
+            <p>查看完整的 EDA 圖表與統計結果</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; text-align: center;">
+            <h3>🗺️ 安全路線</h3>
+            <p>規劃路線並評估治安風險</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div style="background: #fff3e0; padding: 20px; border-radius: 10px; text-align: center;">
+            <h3>🔥 熱點地圖</h3>
+            <p>探索犯罪案件的空間分布</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+def show_data_analysis():
+    """資料分析頁面 - 展示所有圖表"""
+    st.header("📈 資料分析結果")
+
+    st.markdown("""
+    本頁面展示台中市 105-108 年（2016-2019）竊盜案件的探索性資料分析結果。
+    資料來源：[台中市政府開放資料平台](https://opendata.taichung.gov.tw/)
+    """)
+
+    # 資料概覽
+    st.markdown("---")
+    st.subheader("📊 資料概覽")
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("總案件數", "3,286 件")
+    with col2:
+        st.metric("資料年份", "105-108 年")
+    with col3:
+        st.metric("涵蓋行政區", "29 區")
+    with col4:
+        st.metric("犯罪類型", "4 種")
+
+    # 圖表區域
+    st.markdown("---")
+    st.subheader("📉 年度趨勢分析")
+
+    st.markdown("""
+    **發現**：105-108 年間，台中市竊盜案件呈現明顯的下降趨勢，與官方統計數據一致。
+    """)
+
+    # 顯示年度趨勢圖
+    trend_img = Path("outputs/figures/theft_trend_by_year.png")
+    if trend_img.exists():
+        st.image(str(trend_img), caption="台中市竊盜案件年度趨勢", use_container_width=True)
+    else:
+        st.warning("圖表檔案不存在，請先執行 Notebook 產生圖表")
+
+    # 時段分析
+    st.markdown("---")
+    st.subheader("🕐 時段分布分析")
+
+    st.markdown("""
+    **發現**：
+    - 凌晨 2-6 點、中午 12 點、傍晚 17-18 點為竊盜高峰時段
+    - 不同類型竊盜的時段分布有明顯差異
+    """)
+
+    hour_img = Path("outputs/figures/theft_by_hour.png")
+    if hour_img.exists():
+        st.image(str(hour_img), caption="竊盜案件 24 小時分布", use_container_width=True)
+
+    # 月份分析
+    st.markdown("---")
+    st.subheader("📅 月份分布分析")
+
+    month_img = Path("outputs/figures/theft_by_month.png")
+    if month_img.exists():
+        st.image(str(month_img), caption="竊盜案件月份分布", use_container_width=True)
+
+    # 行政區分析
+    st.markdown("---")
+    st.subheader("🏘️ 行政區分析")
+
+    st.markdown("""
+    **重要發現 - 生態謬誤**：
+    - 以「總件數」排名：西屯區(344件)、北區(331件)、北屯區(267件) 居前三
+    - 以「每萬人竊盜率」排名：**中區(56.7)** 遠高於其他區域
+
+    這說明人口校正的重要性！人口僅 1.8 萬的中區，其每萬人竊盜率是第二名的 2 倍以上。
+    """)
+
+    comparison_img = Path("outputs/figures/district_theft_comparison.png")
+    if comparison_img.exists():
+        st.image(str(comparison_img), caption="總件數 vs 每萬人竊盜率比較", use_container_width=True)
+
+    # 犯罪類型分布
+    st.markdown("---")
+    st.subheader("🔍 犯罪類型分布")
+
+    type_img = Path("outputs/figures/district_theft_by_type.png")
+    if type_img.exists():
+        st.image(str(type_img), caption="各行政區竊盜類型分布", use_container_width=True)
+
+    # 官方統計對照
+    st.markdown("---")
+    st.subheader("📋 官方統計對照")
+
+    st.markdown("""
+    **驗證分析可信度**：將開放資料分析結果與台中市警察局官方統計進行對照。
+    - 開放資料（四類竊盜）約佔官方全部竊盜統計的 18-25%
+    - 兩者的年度趨勢一致，皆呈現逐年下降
+    """)
+
+    official_img = Path("outputs/figures/official_stats_comparison.png")
+    if official_img.exists():
+        st.image(str(official_img), caption="開放資料 vs 官方統計對照", use_container_width=True)
+
+    # 風險指標說明
+    st.markdown("---")
+    st.subheader("📐 風險指標計算方法")
+
+    st.markdown("""
+    | 指標 | 計算公式 | 用途 |
+    |------|----------|------|
+    | 每萬人竊盜率 | 總件數 / 人口 × 10,000 | 行政區間公平比較 |
+    | 時段風險分數 | 該時段案件數 / 全日平均 | 辨識高風險時段 |
+    | 路線風險分數 | Σ(區域風險 × 時段風險) / 經過區數 | 路線安全評估 |
+    """)
+
+    # 資料表格
+    st.markdown("---")
+    st.subheader("📋 行政區風險指標表")
+
+    district_risk = load_district_risk()
+    st.dataframe(
+        district_risk.style.background_gradient(subset=['cases_per_10k_pop'], cmap='Reds'),
+        use_container_width=True,
+        hide_index=True
+    )
 
 
 def show_route_planning():
