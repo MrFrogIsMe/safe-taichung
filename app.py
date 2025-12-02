@@ -12,6 +12,14 @@ from folium.plugins import HeatMap, MarkerCluster
 from streamlit_folium import st_folium
 from pathlib import Path
 import json
+import os
+
+# Google Maps API（如果有設定 API Key）
+try:
+    from src.google_maps import get_directions, decode_polyline
+    GOOGLE_MAPS_AVAILABLE = os.getenv('GOOGLE_MAPS_API_KEY') is not None
+except ImportError:
+    GOOGLE_MAPS_AVAILABLE = False
 
 # 設定頁面配置
 st.set_page_config(
@@ -208,8 +216,8 @@ def create_risk_map(district_risk_df, show_rate=True):
     return m
 
 
-def create_route_map(origin_name, dest_name, route_result):
-    """建立路線地圖"""
+def create_route_map(origin_name, dest_name, route_result, google_route=None):
+    """建立路線地圖（支援 Google Maps 真實路線）"""
     origin_info = LANDMARKS.get(origin_name)
     dest_info = LANDMARKS.get(dest_name)
 
@@ -222,7 +230,7 @@ def create_route_map(origin_name, dest_name, route_result):
 
     m = folium.Map(
         location=[center_lat, center_lon],
-        zoom_start=13,
+        zoom_start=14,
         tiles='cartodbpositron'
     )
 
@@ -240,14 +248,31 @@ def create_route_map(origin_name, dest_name, route_result):
         icon=folium.Icon(color='red', icon='stop')
     ).add_to(m)
 
-    # 繪製連線（簡化路線）
+    # 繪製路線
     route_color = get_risk_color(route_result['route_risk_label'])
-    folium.PolyLine(
-        locations=[origin_info['coords'], dest_info['coords']],
-        weight=5,
-        color=route_color,
-        opacity=0.8
-    ).add_to(m)
+
+    if google_route and 'polyline' in google_route:
+        # 使用 Google Maps 真實路線
+        coords = decode_polyline(google_route['polyline'])
+        # decode_polyline 回傳 {'lat': x, 'lng': y} 格式
+        route_coords = [(p['lat'], p['lng']) for p in coords]
+        folium.PolyLine(
+            locations=route_coords,
+            weight=5,
+            color=route_color,
+            opacity=0.8,
+            popup=f"距離: {google_route['distance']['text']}<br>時間: {google_route['duration']['text']}"
+        ).add_to(m)
+    else:
+        # Fallback: 直線連接
+        folium.PolyLine(
+            locations=[origin_info['coords'], dest_info['coords']],
+            weight=5,
+            color=route_color,
+            opacity=0.8,
+            dash_array='10, 10',  # 虛線表示非真實路線
+            popup="簡化路線（非實際道路）"
+        ).add_to(m)
 
     return m
 
@@ -506,6 +531,12 @@ def show_route_planning():
     """安全路線規劃頁面"""
     st.header("🗺️ 安全路線規劃")
 
+    # 顯示 API 狀態
+    if GOOGLE_MAPS_AVAILABLE:
+        st.success("✅ Google Maps API 已啟用 - 使用真實道路導航")
+    else:
+        st.warning("⚠️ Google Maps API 未設定 - 使用簡化直線路線")
+
     st.markdown("""
     輸入您的出發地與目的地，系統將評估路線的治安風險等級，
     並提供安全建議。
@@ -556,6 +587,17 @@ def show_route_planning():
             format="%d:00"
         )
 
+    # 交通方式選擇（只在 API 可用時顯示）
+    if GOOGLE_MAPS_AVAILABLE:
+        travel_mode = st.radio(
+            "🚶 交通方式",
+            ["walking", "driving", "bicycling"],
+            format_func=lambda x: {"walking": "🚶 步行", "driving": "🚗 開車", "bicycling": "🚴 騎車"}[x],
+            horizontal=True
+        )
+    else:
+        travel_mode = "walking"
+
     # 分析按鈕
     if st.button("🔍 分析路線風險", type="primary", use_container_width=True):
         origin_district = LANDMARKS[origin]['district']
@@ -563,11 +605,28 @@ def show_route_planning():
 
         result = compute_route_risk(origin_district, dest_district, hour)
 
+        # 呼叫 Google Maps API 取得真實路線
+        google_route = None
+        if GOOGLE_MAPS_AVAILABLE:
+            with st.spinner("正在規劃路線..."):
+                origin_coords = LANDMARKS[origin]['coords']
+                dest_coords = LANDMARKS[dest]['coords']
+                routes = get_directions(
+                    origin=origin_coords,
+                    destination=dest_coords,
+                    mode=travel_mode,
+                    alternatives=False  # 只取一條路線，節省資源
+                )
+                if routes:
+                    google_route = routes[0]
+
         # 將結果存入 session_state
         st.session_state['route_result'] = result
         st.session_state['route_origin'] = origin
         st.session_state['route_dest'] = dest
         st.session_state['route_hour'] = hour
+        st.session_state['google_route'] = google_route
+        st.session_state['travel_mode'] = travel_mode
 
     # 顯示分析結果（從 session_state 讀取）
     if 'route_result' in st.session_state:
@@ -575,29 +634,59 @@ def show_route_planning():
         origin = st.session_state.get('route_origin', origin)
         dest = st.session_state.get('route_dest', dest)
         hour = st.session_state.get('route_hour', hour)
+        google_route = st.session_state.get('google_route')
+        travel_mode = st.session_state.get('travel_mode', 'walking')
 
         st.markdown("---")
         st.subheader("📋 路線風險分析結果")
 
         # 風險分數卡片
-        col_score, col_level, col_time = st.columns(3)
+        if google_route:
+            # 有 Google Maps 路線資訊
+            col_dist, col_time, col_score, col_level = st.columns(4)
 
-        with col_score:
-            st.metric("風險分數", f"{result['route_risk_score']}")
+            with col_dist:
+                st.metric("📏 距離", google_route['distance']['text'])
 
-        with col_level:
-            level_emoji = {'低': '🟢', '中': '🟡', '高': '🔴'}
-            st.metric("風險等級", f"{level_emoji.get(result['route_risk_label'], '⚪')} {result['route_risk_label']}")
+            with col_time:
+                st.metric("⏱️ 預估時間", google_route['duration']['text'])
 
-        with col_time:
-            time_period = "深夜" if hour >= 22 or hour < 6 else "晚間" if hour >= 18 else "白天" if hour >= 6 else "深夜"
-            st.metric("出發時段", f"{hour}:00 ({time_period})")
+            with col_score:
+                st.metric("⚠️ 風險分數", f"{result['route_risk_score']}")
+
+            with col_level:
+                level_emoji = {'低': '🟢', '中': '🟡', '高': '🔴'}
+                st.metric("🎯 風險等級", f"{level_emoji.get(result['route_risk_label'], '⚪')} {result['route_risk_label']}")
+        else:
+            # 沒有 Google Maps 路線
+            col_score, col_level, col_time = st.columns(3)
+
+            with col_score:
+                st.metric("風險分數", f"{result['route_risk_score']}")
+
+            with col_level:
+                level_emoji = {'低': '🟢', '中': '🟡', '高': '🔴'}
+                st.metric("風險等級", f"{level_emoji.get(result['route_risk_label'], '⚪')} {result['route_risk_label']}")
+
+            with col_time:
+                time_period = "深夜" if hour >= 22 or hour < 6 else "晚間" if hour >= 18 else "白天" if hour >= 6 else "深夜"
+                st.metric("出發時段", f"{hour}:00 ({time_period})")
 
         # 地圖
         st.subheader("🗺️ 路線地圖")
-        route_map = create_route_map(origin, dest, result)
+        route_map = create_route_map(origin, dest, result, google_route)
         if route_map:
             st_folium(route_map, width=700, height=400)
+
+        # 導航步驟（如果有 Google Maps 路線）
+        if google_route and google_route.get('steps'):
+            with st.expander("📝 導航步驟", expanded=False):
+                for i, step in enumerate(google_route['steps'], 1):
+                    # 清理 HTML 標籤
+                    instruction = step['instruction']
+                    instruction = instruction.replace('<b>', '**').replace('</b>', '**')
+                    instruction = instruction.replace('<div style="font-size:0.9em">', ' (').replace('</div>', ')')
+                    st.markdown(f"{i}. {instruction} - {step['distance']}")
 
         # 詳細分析
         st.subheader("📊 詳細分析")
@@ -640,7 +729,7 @@ def show_route_planning():
 
         # 清除結果按鈕
         if st.button("🔄 重新查詢", key="clear_route"):
-            for key in ['route_result', 'route_origin', 'route_dest', 'route_hour']:
+            for key in ['route_result', 'route_origin', 'route_dest', 'route_hour', 'google_route', 'travel_mode']:
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()
