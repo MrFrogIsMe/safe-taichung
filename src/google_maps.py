@@ -7,13 +7,34 @@ SafeTaichung - Google Maps API 整合模組
 import os
 from typing import Optional
 from datetime import datetime
-from dotenv import load_dotenv
 
-# 載入環境變數
-load_dotenv()
+# 載入環境變數（本地開發用）
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # 延遲載入 googlemaps，避免在沒有 API key 時出錯
 _gmaps_client = None
+
+
+def _get_api_key() -> str | None:
+    """取得 API Key（支援 .env 和 Streamlit Secrets）"""
+    # 1. 先檢查環境變數（本地 .env）
+    api_key = os.getenv('GOOGLE_MAPS_API_KEY')
+    if api_key:
+        return api_key
+
+    # 2. 檢查 Streamlit Secrets（雲端部署）
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets') and 'GOOGLE_MAPS_API_KEY' in st.secrets:
+            return st.secrets['GOOGLE_MAPS_API_KEY']
+    except Exception:
+        pass
+
+    return None
 
 
 def get_client():
@@ -23,13 +44,12 @@ def get_client():
     if _gmaps_client is None:
         import googlemaps
 
-        api_key = os.getenv('GOOGLE_MAPS_API_KEY')
+        api_key = _get_api_key()
         if not api_key:
             raise ValueError(
-                "請設定 GOOGLE_MAPS_API_KEY 環境變數\n"
-                "1. 建立 .env 檔案\n"
-                "2. 加入: GOOGLE_MAPS_API_KEY=your_api_key_here\n"
-                "取得 API Key: https://console.cloud.google.com/apis/credentials"
+                "請設定 GOOGLE_MAPS_API_KEY\n"
+                "本地開發: 建立 .env 檔案\n"
+                "Streamlit Cloud: 在 Settings > Secrets 設定"
             )
         _gmaps_client = googlemaps.Client(key=api_key)
 

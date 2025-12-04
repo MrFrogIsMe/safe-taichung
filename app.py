@@ -15,9 +15,22 @@ import json
 import os
 
 # Google Maps API（如果有設定 API Key）
+def _check_google_maps_available():
+    """檢查 Google Maps API 是否可用"""
+    # 檢查環境變數
+    if os.getenv('GOOGLE_MAPS_API_KEY'):
+        return True
+    # 檢查 Streamlit Secrets
+    try:
+        if hasattr(st, 'secrets') and 'GOOGLE_MAPS_API_KEY' in st.secrets:
+            return True
+    except Exception:
+        pass
+    return False
+
 try:
     from src.google_maps import get_directions, decode_polyline
-    GOOGLE_MAPS_AVAILABLE = os.getenv('GOOGLE_MAPS_API_KEY') is not None
+    GOOGLE_MAPS_AVAILABLE = _check_google_maps_available()
 except ImportError:
     GOOGLE_MAPS_AVAILABLE = False
 
