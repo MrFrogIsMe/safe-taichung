@@ -333,7 +333,7 @@ def main():
         st.markdown("---")
         page = st.radio(
             "選擇功能",
-            ["🏠 首頁", "📈 資料分析", "🗺️ 安全路線規劃", "📊 治安風險地圖", "🔥 犯罪熱點地圖", "ℹ️ 關於本系統"],
+            ["🏠 首頁", "📈 資料分析", "🗺️ 安全路線規劃", "📊 治安風險地圖", "🔥 犯罪熱點地圖"],
             index=0
         )
 
@@ -355,67 +355,44 @@ def main():
         show_risk_map()
     elif page == "🔥 犯罪熱點地圖":
         show_crime_heatmap()
-    else:
-        show_about()
 
 
 def show_home():
-    """首頁 - 專題簡報嵌入"""
+    """首頁 - 專題介紹與簡報"""
     # 首頁 Logo 置中顯示
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.image("assets/images/logo.png", use_container_width=True)
 
     st.markdown("""
-    ## 計算思維與人工智慧 期末專題
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="margin: 0;">計算思維與人工智慧 期末專題</h2>
+        <p style="font-size: 1.1em; color: #666;">台中市都市犯罪分析：以 AI 輔助打造安全永續城市</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    **研究題目**：台中市都市犯罪分析：以 AI 輔助打造安全永續城市
-    """)
-
-    # Canva 簡報嵌入區域
+    # 專題簡報（Canva 嵌入）
     st.markdown("---")
     st.subheader("📊 專題簡報")
 
-    # Canva 嵌入說明
-    st.info("""
-    💡 **如何嵌入 Canva 簡報**：
-    1. 在 Canva 開啟你的簡報
-    2. 點擊右上角「分享」→「更多」→「嵌入」
-    3. 複製 embed code 中的網址
-    4. 將下方的 CANVA_EMBED_URL 替換為你的網址
+    st.markdown("""
+    <div style="position: relative; width: 100%; height: 0; padding-top: 56.25%;
+         padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden;
+         border-radius: 8px; will-change: transform;">
+        <iframe loading="lazy" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0; margin: 0;"
+            src="https://www.canva.com/design/DAG6VHyKleU/FkzpZ_51nfX0rtUcZ_63vw/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen">
+        </iframe>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 系統目的
+    st.markdown("---")
+    st.subheader("📌 系統目的")
+
+    st.markdown("""
+    本系統結合臺中市竊盜逐案開放資料與人口統計，透過行政區風險指標與時段分析，
+    設計出「台中安全路線導航」原型系統，協助市民與遊客在規劃移動路線時兼顧距離與治安風險。
     """)
-
-    # Canva 嵌入框架（請替換為實際的 Canva 嵌入網址）
-    canva_embed_url = st.text_input(
-        "貼上 Canva 嵌入網址",
-        placeholder="https://www.canva.com/design/XXXXX/view?embed",
-        help="從 Canva 分享選單中取得嵌入網址"
-    )
-
-    if canva_embed_url and "canva.com" in canva_embed_url:
-        st.markdown(f"""
-        <div style="position: relative; width: 100%; height: 0; padding-top: 56.25%; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <iframe
-                loading="lazy"
-                style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none;"
-                src="{canva_embed_url}"
-                allowfullscreen>
-            </iframe>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        # 預留空間顯示佔位圖
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    border-radius: 12px;
-                    padding: 80px 40px;
-                    text-align: center;
-                    color: white;
-                    margin: 20px 0;">
-            <h2 style="margin: 0;">📽️ 簡報區域</h2>
-            <p style="opacity: 0.8; margin-top: 10px;">請在上方輸入 Canva 嵌入網址</p>
-        </div>
-        """, unsafe_allow_html=True)
 
     # 快速導覽
     st.markdown("---")
@@ -446,6 +423,79 @@ def show_home():
             <p style="color: #333; margin: 0;">探索犯罪案件的空間分布</p>
         </div>
         """, unsafe_allow_html=True)
+
+    # SDG 永續發展目標
+    st.markdown("---")
+    st.subheader("🌍 SDG 永續發展目標連結")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image("assets/images/sdg11.png", use_container_width=True)
+    with col2:
+        st.image("assets/images/sdg16.png", use_container_width=True)
+
+    with st.expander("📖 SDG 11：永續城市與社區", expanded=False):
+        st.markdown("""
+        **建構具包容、安全、韌性及永續特質的城市與鄉村**
+
+        - **本研究將台中市竊盜逐案資料轉換為「行政區風險指標」與「安全路線建議」**
+          透過將原本零散的逐案竊盜紀錄進行統計分析，本研究將犯罪點位聚合為各行政區的「相對風險指標」，並進一步結合生活／旅遊動線，產出具體的安全路線與時段建議。
+
+        - **提供市民與遊客在規劃移動路徑時參考，降低治安疑慮，提升都市居住與旅遊安全感**
+          研究成果可應用在學生上下課、旅客前往夜市或商圈等情境，協助使用者在規劃行走路線時，能避開相對高風險區域。
+
+        - **透過互動式治安風險地圖，讓公眾能更直觀地理解空間風險差異**
+          以視覺化與互動式地圖呈現不同行政區犯罪的分布，讓沒有數據分析背景的一般民眾，也能一眼看出「哪裡相對安全、哪裡需要多注意」。
+        """)
+
+    with st.expander("📖 SDG 16：和平、正義與健全制度", expanded=False):
+        st.markdown("""
+        **促進和平多元的社會，確保司法平等，建立具公信力且廣納民意的體系**
+
+        - **本系統以政府開放資料與警政統計為基礎，提升治安資訊透明度與公民參與度**
+          本系統完全建立在政府開放資料與警政統計等公開資料之上，透過清楚標示資料來源與分析流程，讓民眾可以追溯與檢驗分析結果。
+
+        - **透過數據驅動方式澄清「台中治安很差」等刻板印象**
+          本系統以客觀政府數據呈現台中各行政區的實際風險狀況，避免單一事件被過度放大的情況。
+
+        - **促進民眾對治安政策與警政資源配置的理性討論**
+          當犯罪熱點被明確可視化後，民眾在討論是否需要增加警力、調整巡邏路線或改善公共空間設計時，可以有更具體的依據。
+        """)
+
+    # 資料來源
+    st.markdown("---")
+    st.subheader("📊 資料來源")
+
+    st.markdown("""
+    | 資料集 | 來源 | 時間範圍 |
+    |--------|------|----------|
+    | 竊盜逐案資料 | 台中市政府開放資料平台 | 105-108年 |
+    | 人口統計 | 台中市政府民政局 | 107年12月 |
+    | 官方治安統計 | 台中市政府警察局 | 2016-2022年 |
+    """)
+
+    # 使用說明與限制
+    with st.expander("⚠️ 使用說明與限制"):
+        st.markdown("""
+        1. **本系統為學術/教學用途**，風險分數為相對指標，實際治安仍以官方資訊為準
+        2. 開放資料僅涵蓋四類竊盜（機車、汽車、住宅、自行車），非完整竊盜統計
+        3. 資料時間範圍為 105-108 年，較近期資料尚未開放
+        4. 路線規劃已串接 Google Maps API，提供真實道路導航
+        """)
+
+    # 技術架構
+    with st.expander("🛠️ 技術架構"):
+        st.markdown("""
+        ```
+        資料處理流程：
+        竊盜逐案點位 → 行政區與時段統計 → 人口校正 → 風險指標 → 路線風險評估
+        ```
+
+        - **後端**：Python + Pandas
+        - **前端**：Streamlit + Folium
+        - **地圖 API**：Google Maps Directions API
+        - **資料分析**：Jupyter Notebook
+        """)
 
 
 def show_data_analysis():
@@ -990,102 +1040,6 @@ def show_crime_heatmap():
         """)
 
 
-def show_about():
-    """關於本系統頁面"""
-    st.header("ℹ️ 關於本系統")
-
-    st.markdown("""
-    ## 台中安全路線導航 SafeTaichung（Prototype）
-
-    ### 📌 系統目的
-
-    本系統結合臺中市竊盜逐案開放資料與人口統計，透過行政區風險指標與時段分析，
-    設計出「台中安全路線導航」原型系統，協助市民與遊客在規劃移動路線時兼顧距離與治安風險。
-
-    ---
-
-    ### 🌍 SDG 永續發展目標連結
-    """)
-
-    # SDG 圖片並排顯示
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image("assets/images/sdg11.png", use_container_width=True)
-    with col2:
-        st.image("assets/images/sdg16.png", use_container_width=True)
-
-    st.markdown("""
-    #### SDG 11：建構具包容、安全、韌性及永續特質的城市與鄉村
-    **網址：** https://sdgs.un.org/goals/goal11
-
-    - **本研究將台中市竊盜逐案資料轉換為「行政區風險指標」與「安全路線建議」**
-
-        透過將原本零散的逐案竊盜紀錄進行統計分析，本研究將犯罪點位聚合為各行政區的「相對風險指標」，並進一步結合生活／旅遊動線，產出具體的安全路線與時段建議，將冷冰冰的犯罪數據轉化為一般民眾看得懂、用得到的決策資訊，有助於強化城市在日常移動與公共空間使用上的安全和便利性。
-
-    - **提供市民與遊客在規劃移動路徑時參考，降低治安疑慮，提升都市居住與旅遊安全感**
-
-        研究成果可應用在學生上下課、旅客前往夜市或商圈等情境，協助使用者在規劃行走路線時，能避開相對高風險區域。透過這種方式，能降低民眾對台中治安的焦慮感，也提升城市在居住與觀光層面的吸引力與安全形象，契合 SDG 11 所強調的「安全且包容的城市環境」。
-
-    - **透過互動式治安風險地圖，讓公眾能更直觀地理解空間風險差異**
-
-        以視覺化與互動式地圖呈現不同行政區犯罪的分布，讓沒有數據分析背景的一般民眾，也能一眼看出「哪裡相對安全、哪裡需要多注意」。此種資訊呈現方式，有助於提升公眾對都市空間風險的瞭解，促進更多人參與都市治安問題討論，有助於打造更具永續性的城市環境。
-
-    ---
-
-    #### SDG 16：促進和平多元的社會，確保司法平等，建立具公信力且廣納民意的體系
-    **網址：** https://sdgs.un.org/goals/goal16
-
-    - **本系統以政府開放資料與警政統計為基礎，提升治安資訊透明度與公民參與度**
-
-        本系統完全建立在政府開放資料與警政統計等公開資料之上，透過清楚標示資料來源與分析流程，讓民眾可以追溯與檢驗分析結果。這種「以開放資料建構治安分析系統」的做法，不僅強化政府資訊透明度，也讓公民有機會利用相同資料進行二次分析與監督，符合 SDG 16 對「有效、負責且具透明度的制度」的要求。
-
-    - **透過數據驅動方式澄清「台中治安很差」等刻板印象**
-
-        本系統以客觀政府數據呈現台中各行政區的實際風險狀況，避免單一事件被過度放大的情況。藉由用圖表與指標說明「哪些區域的案件較多」，有助社會從情緒性標籤走向以事實為基礎的理性理解，減少對特定城市或族群的污名化，回應 SDG 16 所倡導的「和平與公正」價值。
-
-    - **促進民眾對治安政策與警政資源配置的理性討論**
-      
-        當犯罪熱點被明確可視化後，民眾在討論是否需要增加警力、調整巡邏路線或改善公共空間設計時，可以有更具體的依據，不再只憑感覺或謠言。本系統的建置有助於社會大眾對治安政策進行更有品質的公共討論，促進警政機關與市民之間的互信與合作，符合 SDG 16 強調的「健全制度」與「公民參與」精神。
-
-    ---
-
-    ### 📊 資料來源
-
-    | 資料集 | 來源 | 時間範圍 |
-    |--------|------|----------|
-    | 竊盜逐案資料 | 台中市政府開放資料平台 | 105-108年 |
-    | 人口統計 | 台中市政府民政局 | 107年12月 |
-    | 官方治安統計 | 台中市政府警察局 | 2016-2022年 |
-
-    ---
-
-    ### ⚠️ 使用說明與限制
-
-    1. **本系統為學術/教學用途**，風險分數為相對指標，實際治安仍以官方資訊為準
-    2. 開放資料僅涵蓋四類竊盜（機車、汽車、住宅、自行車），非完整竊盜統計
-    3. 資料時間範圍為105-108年，較近期資料尚未開放
-    4. 路線規劃為簡化版本，未實際串接導航 API
-
-    ---
-
-    ### 🛠️ 技術架構
-
-    ```
-    資料處理流程：
-    竊盜逐案點位 → 行政區與時段統計 → 人口校正 → 風險指標 → 路線風險評估
-    ```
-
-    - **後端**：Python + Pandas
-    - **前端**：Streamlit + Folium
-    - **資料分析**：Jupyter Notebook
-
-    ---
-
-    ### 👥 開發團隊
-
-    計算思維與人工智慧課程專題
-
-    """)
 
 
 # 初始化 session state
