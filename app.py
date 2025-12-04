@@ -327,13 +327,8 @@ def create_route_map(origin_name, dest_name, route_result, google_route=None, sh
 def main():
     # 側邊欄
     with st.sidebar:
-        st.markdown("""
-        <div style="text-align: center; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 10px;">
-            <h1 style="color: white; margin: 0; font-size: 2em;">🛡️</h1>
-            <h3 style="color: white; margin: 5px 0;">SafeTaichung</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        st.title("🛡️ 台中安全路線導航")
+        # Logo
+        st.image("assets/images/logo.png", use_container_width=True)
 
         st.markdown("---")
         page = st.radio(
@@ -366,7 +361,10 @@ def main():
 
 def show_home():
     """首頁 - 專題簡報嵌入"""
-    st.header("🏠 台中安全路線導航 SafeTaichung")
+    # 首頁 Logo 置中顯示
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.image("assets/images/logo.png", use_container_width=True)
 
     st.markdown("""
     ## 計算思維與人工智慧 期末專題
