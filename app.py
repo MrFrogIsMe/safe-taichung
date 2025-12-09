@@ -5,14 +5,15 @@ Streamlit 應用程式
 啟動方式: streamlit run app.py
 """
 
-import streamlit as st
-import pandas as pd
+import os
+from pathlib import Path
+
 import folium
+import pandas as pd
+import streamlit as st
 from folium.plugins import HeatMap, MarkerCluster
 from streamlit_folium import st_folium
-from pathlib import Path
-import json
-import os
+
 
 # Google Maps API（如果有設定 API Key）
 def _check_google_maps_available():
@@ -29,7 +30,7 @@ def _check_google_maps_available():
     return False
 
 try:
-    from src.google_maps import get_directions, decode_polyline
+    from src.google_maps import decode_polyline, get_directions
     GOOGLE_MAPS_AVAILABLE = _check_google_maps_available()
 except ImportError:
     GOOGLE_MAPS_AVAILABLE = False
@@ -794,7 +795,7 @@ def show_route_planning():
                 ]
 
                 if len(nearby_crimes) > 0:
-                    st.markdown(f"**📊 路線附近犯罪統計** (約 800m 範圍內)")
+                    st.markdown("**📊 路線附近犯罪統計** (約 800m 範圍內)")
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("附近案件數", f"{len(nearby_crimes)} 件")
@@ -839,7 +840,7 @@ def show_route_planning():
             - 可考慮選擇其他時段出發
             """)
         elif result['route_risk_label'] == '中':
-            st.info(f"""
+            st.info("""
             ℹ️ **此路線風險中等**
 
             建議措施：
@@ -847,7 +848,7 @@ def show_route_planning():
             - 避免在偏僻巷弄逗留
             """)
         else:
-            st.success(f"""
+            st.success("""
             ✅ **此路線相對安全**
 
             仍建議保持基本警覺，注意個人財物安全。

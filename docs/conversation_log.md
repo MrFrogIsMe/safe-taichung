@@ -21,7 +21,7 @@
 
 ### 事前的資料預備
 
-交由 Perplexity AI 進行台中的竊盜資料蒐集，以及可行的主題方向建議。
+交由 Comet / Perplexity AI 進行台中的竊盜資料蒐集，以及可行的主題方向建議。
 
 [對話連結](https://www.perplexity.ai/search/qi-mo-zhuan-an-da-gang-tai-zho-DHqisjnaSTejB5ztxSMaNA#0)
 
@@ -310,7 +310,3 @@ def is_in_taichung(lat, lon):
 1. 開放資料僅涵蓋四類竊盜，約佔官方統計的 20%
 2. 資料時間範圍為 105-108 年，較近期資料尚未開放
 3. 風險分數為相對指標，實際治安仍以官方資訊為準
-
----
-
-*此文件記錄 SafeTaichung 專案的 AI 輔助開發過程*

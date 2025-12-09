@@ -2,9 +2,9 @@
 
 台中市都市犯罪分析專案，結合開放資料進行犯罪統計分析、視覺化與安全路線規劃。
 
-**GitHub**: https://github.com/pqzada/computational-thinking
+**GitHub**: https://github.com/MrFrogIsMe/safe-taichung
 
-**Live Demo**: https://safetaichung.streamlit.app
+**Live Demo**: https://safe-taichung-3geudbbxzi7y9eesd2fsku.streamlit.app/
 
 ---
 
@@ -168,13 +168,3 @@ uv run python src/geocoder.py --nominatim --sample 100
 2. 開放資料僅涵蓋四類竊盜，約佔官方全部竊盜的 20%
 3. 資料時間範圍為 105-108 年，較近期資料尚未開放
 4. 實際治安仍以官方資訊為準
-
----
-
-## License
-
-MIT License
-
----
-
-計算思維與人工智慧課程專題
